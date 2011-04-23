@@ -1,30 +1,33 @@
-# See www/CMake.html for instructions on how to build libcxx with CMake.
-
 #===============================================================================
 # Setup Project
 #===============================================================================
 
-project(libcxx CXX C)
-cmake_minimum_required(VERSION 2.6.4)
+if (NOT CLANG_BOOTSTRAPPING)
+  project(libcxx CXX C)
+  cmake_minimum_required(VERSION 2.6.4)
 
-set(PACKAGE_NAME libcxx)
-set(PACKAGE_VERSION lll)
-set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
-set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
+  set(PACKAGE_NAME libcxx)
+  set(PACKAGE_VERSION lll)
+  set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+  set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
 
-# Add path for custom modules
-set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules"
-  )
+  # Add path for custom modules
+  set(CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules"
+    )
 
-# Require out of source build.
-include(MacroEnsureOutOfSourceBuild)
-MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
- "${PROJECT_NAME} requires an out of source build. Please create a separate
- build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
- )
+  # Require out of source build.
+  include(MacroEnsureOutOfSourceBuild)
+    MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
+    "${PROJECT_NAME} requires an out of source build. Please create a separate
+    build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
+    )
+else()
+  include(CMakeForceCompiler)
+  CMAKE_FORCE_CXX_COMPILER(${CLANG_BOOTSTRAP_CXX_DRIVER} BootstrapClang)
+endif()
 
 #===============================================================================
 # Setup CMake Options
@@ -44,7 +47,12 @@ option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
 #===============================================================================
 
 # Get triples.
-include(GetTriple)
+if (NOT CLANG_BOOTSTRAPPING)
+  include(GetTriple)
+else()
+  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/GetTriple.cmake")
+endif()
+
 get_host_triple(LIBCXX_HOST_TRIPLE
   LIBCXX_HOST_ARCH
   LIBCXX_HOST_VENDOR
@@ -59,7 +67,11 @@ get_target_triple(LIBCXX_TARGET_TRIPLE
 set(LIBCXX_TARGET_TRIPLE ${LIBCXX_TARGET_TRIPLE} CACHE STRING "Target triple.")
 
 # Configure compiler.
-include(config-ix)
+if (NOT CLANG_BOOTSTRAPPING)
+  include(config-ix)
+else()
+  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config-ix.cmake")
+endif()
 
 #===============================================================================
 # Setup Compiler Flags
@@ -135,12 +147,12 @@ else()
   endif()
 endif()
 
+
 # This is the _ONLY_ place where add_definitions is called.
 add_definitions(
- ${LIBCXX_CXX_REQUIRED_FLAGS}
- ${LIBCXX_CXX_WARNING_FLAGS}
- ${LIBCXX_CXX_FEATURE_FLAGS}
- )
+  ${LIBCXX_CXX_REQUIRED_FLAGS}
+  ${LIBCXX_CXX_WARNING_FLAGS}
+  ${LIBCXX_CXX_FEATURE_FLAGS})
 
 #===============================================================================
 # Setup Source Code
@@ -157,3 +169,4 @@ add_subdirectory(lib)
 #===============================================================================
 
 add_subdirectory(test)
+ 

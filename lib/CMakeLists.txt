@@ -12,12 +12,16 @@ if (MSVC_IDE OR XCODE)
 endif()
 
 if (LIBCXX_ENABLE_SHARED)
-  add_library(cxx SHARED
-    ${sources}
-    )
+  add_library(cxx SHARED ${sources})
 else()
-  add_library(cxx STATIC
-    ${sources}
+  add_library(cxx STATIC ${sources})
+endif()
+
+if (CLANG_BOOTSTRAPPING)
+  add_dependencies(cxx ${CLANG_BOOTSTRAP_BARRIER})
+  set_source_files_properties(${sources}
+    PROPERTIES
+      OBJECT_DEPENDS ${CLANG_BOOTSTRAP_BARRIER}
     )
 endif()
 
