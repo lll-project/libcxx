@@ -19,10 +19,6 @@ endif()
 
 if (CLANG_BOOTSTRAPPING)
   add_dependencies(cxx ${CLANG_BOOTSTRAP_BARRIER})
-  set_source_files_properties(${sources}
-    PROPERTIES
-      OBJECT_DEPENDS ${CLANG_BOOTSTRAP_BARRIER}
-    )
 endif()
 
 # Generate library list.
